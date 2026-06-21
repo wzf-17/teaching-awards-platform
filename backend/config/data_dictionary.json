@@ -1,0 +1,452 @@
+{
+  "generated_at": "2026-01-21 15:43:09",
+  "schema": "teaching_awards",
+  "tables": {
+    "award_collab_summary": {
+      "comment": "",
+      "row_count": 8,
+      "columns": [
+        {
+          "name": "year",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "2021",
+            "2025"
+          ]
+        },
+        {
+          "name": "bin_label",
+          "type": "varchar(20)",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "1-5",
+            "11-15",
+            "16及以上",
+            "6-10"
+          ]
+        },
+        {
+          "name": "cnt",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "2",
+            "18",
+            "9",
+            "176",
+            "38"
+          ]
+        },
+        {
+          "name": "pct",
+          "type": "decimal(6,2)",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "0.98",
+            "8.78",
+            "4.39",
+            "85.85",
+            "18.54"
+          ]
+        },
+        {
+          "name": "sort_order",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "1",
+            "3",
+            "4",
+            "2"
+          ]
+        }
+      ]
+    },
+    "award_research_theme_summary": {
+      "comment": "",
+      "row_count": 35,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "21",
+            "22",
+            "23",
+            "24",
+            "25"
+          ]
+        },
+        {
+          "name": "year",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "2021",
+            "2025"
+          ]
+        },
+        {
+          "name": "level_name",
+          "type": "varchar(50)",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "战略性",
+            "战术性",
+            "其他",
+            "合计",
+            "人才培养战略"
+          ]
+        },
+        {
+          "name": "category",
+          "type": "varchar(100)",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "人才培养战略",
+            "管理支持战略",
+            "资源支持战略",
+            "大类人才培养模式",
+            "专业人才培养模式"
+          ]
+        },
+        {
+          "name": "item",
+          "type": "varchar(200)",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "大类人才培养模式",
+            "专业人才培养模式",
+            "全校人才培养模式",
+            "创新创业教育培养模式",
+            "小计"
+          ]
+        },
+        {
+          "name": "award_count",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "42",
+            "78",
+            "9",
+            "7",
+            "136"
+          ]
+        },
+        {
+          "name": "pct",
+          "type": "decimal(6,2)",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "20.49",
+            "38.05",
+            "4.39",
+            "3.41",
+            "66.34"
+          ]
+        },
+        {
+          "name": "sort_order",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ]
+        }
+      ]
+    },
+    "institutions": {
+      "comment": "完成单位信息表",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": []
+        },
+        {
+          "name": "name",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "comment": "学校名称",
+          "examples": []
+        },
+        {
+          "name": "school_level",
+          "type": "varchar(50)",
+          "nullable": true,
+          "default": null,
+          "comment": "学校层次",
+          "examples": []
+        },
+        {
+          "name": "discipline_type",
+          "type": "varchar(50)",
+          "nullable": true,
+          "default": null,
+          "comment": "学科类型",
+          "examples": []
+        },
+        {
+          "name": "location",
+          "type": "varchar(50)",
+          "nullable": true,
+          "default": null,
+          "comment": "地理位置",
+          "examples": []
+        }
+      ]
+    },
+    "v_award_analysis": {
+      "comment": "VIEW",
+      "row_count": 14,
+      "columns": [
+        {
+          "name": "获奖年份",
+          "type": "int",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "2021",
+            "2025"
+          ]
+        },
+        {
+          "name": "第一完成单位学科类型",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "其他类",
+            "农林类",
+            "医药类",
+            "师范类",
+            "理工类"
+          ]
+        },
+        {
+          "name": "奖项数量",
+          "type": "bigint",
+          "nullable": false,
+          "default": "0",
+          "comment": "",
+          "examples": [
+            "22",
+            "13",
+            "12",
+            "14",
+            "43"
+          ]
+        }
+      ]
+    },
+    "wordcloud_images": {
+      "comment": "",
+      "row_count": 2,
+      "columns": [
+        {
+          "name": "year",
+          "type": "int",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "2021",
+            "2025"
+          ]
+        },
+        {
+          "name": "filename",
+          "type": "varchar(255)",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "zhejiang2021.png",
+            "zhejiang2025.png"
+          ]
+        },
+        {
+          "name": "mime_type",
+          "type": "varchar(50)",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "image/png"
+          ]
+        },
+        {
+          "name": "img",
+          "type": "longblob",
+          "nullable": false,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "b'\\x89PNG\\r\\n\\x1a\\n\\x00\\x00\\x00\\rIHDR\\x00\\x00\\x02~\\x00\\x00\\x01\\x90\\x08\\x02\\x00\\x…",
+            "b'\\x89PNG\\r\\n\\x1a\\n\\x00\\x00\\x00\\rIHDR\\x00\\x00\\x02}\\x00\\x00\\x01\\x90\\x08\\x02\\x00\\x…"
+          ]
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP",
+          "comment": "",
+          "examples": []
+        }
+      ]
+    },
+    "zhejiang_awards": {
+      "comment": "",
+      "row_count": 410,
+      "columns": [
+        {
+          "name": "序号",
+          "type": "int",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ]
+        },
+        {
+          "name": "成果名称",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "\"东方设计语境下的\"\"中国独立设计师培养模式\"",
+            "“一体·两翼·三融”——新时代区域高等教育对外开放的温州模式",
+            "“一体两翼，四轮驱动”的优秀乡村小学教师培养探索与实践",
+            "“一体两翼、创新驱动”的新工科自动化专业人才培养模式探索与实践",
+            "“一体两翼、多维融通”成人高等教育乡村振兴复合应用型人才培养改革与实践"
+          ]
+        },
+        {
+          "name": "完成人",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "丁伟杰、陈光宣、王勋、周胜利、王锋、黄安安、张其前、盛蒙蒙、陆超伦、俞天纬",
+            "严从根、童富勇、王晨、肖正德、周佳、徐洁、程建坤",
+            "严从根、黄兆信、程建坤、徐洁、王晨、李丽、沈嫣、杨俊锋、黄扬杰、楼利高",
+            "严小军、卢海英、黄永良、吴中平、傅纪良、杨宁、王湖滨、王瑞、魏汝领、张同宽",
+            "严小军、谢永和、王健鑫、傅纪良、贝静红、王湖滨、叶芳、金武州、陈宏祖、佘红艳"
+          ]
+        },
+        {
+          "name": "完成单位",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "中国美术学院",
+            "中国计量大学",
+            "中国计量大学现代科技学院、中国计量大学、贵州理工学院、绍兴文理学院、重庆理工大学",
+            "丽水学院",
+            "台州学院"
+          ]
+        },
+        {
+          "name": "第一完成单位层次",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "985",
+            "其他类"
+          ]
+        },
+        {
+          "name": "第一完成单位学科类型",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "其他类",
+            "农林类",
+            "医药类",
+            "师范类",
+            "理工类"
+          ]
+        },
+        {
+          "name": "第一完成单位地理位置",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "丽水",
+            "台州",
+            "嘉兴",
+            "宁波",
+            "杭州"
+          ]
+        },
+        {
+          "name": "获奖年份",
+          "type": "int",
+          "nullable": true,
+          "default": null,
+          "comment": "",
+          "examples": [
+            "2021",
+            "2025"
+          ]
+        }
+      ]
+    }
+  }
+}

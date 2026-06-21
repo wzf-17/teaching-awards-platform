@@ -1,0 +1,28 @@
+# Frontend dependencies and build outputs
+frontend/node_modules/
+frontend/dist/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Runtime logs and local caches
+runtime/
+*.log
+
+# Local environment files
+.env
+.env.*
+
+# Large or intermediate data files
+data/raw/
+data/interim/
+data-pipeline/work/
+
+# Office temporary lock files
+~$*
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3

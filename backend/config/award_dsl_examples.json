@@ -1,0 +1,69 @@
+[
+  {
+    "name": "2025_geo_distribution",
+    "spec_version": "0.1",
+    "data": {
+      "source": "mysql:teaching_awards.zhejiang_awards",
+      "year": [2025],
+      "filters": []
+    },
+    "variables": {
+      "dimension": "geo"
+    },
+    "analysis": {
+      "task": "distribution",
+      "metric": "count",
+      "normalize": "percent"
+    },
+    "output": {
+      "chart": "bar_horizontal",
+      "table": true,
+      "narrative": true
+    }
+  },
+  {
+    "name": "compare_subjectType_2021_2025",
+    "spec_version": "0.1",
+    "data": {
+      "source": "mysql:teaching_awards.zhejiang_awards",
+      "year": [2021, 2025],
+      "filters": []
+    },
+    "variables": {
+      "dimension": "subjectType"
+    },
+    "analysis": {
+      "task": "compare_distribution",
+      "metric": "count",
+      "normalize": "percent"
+    },
+    "output": {
+      "chart": "stacked_percent",
+      "table": true,
+      "narrative": true
+    }
+  },
+  {
+    "name": "2021_completionMode_top5",
+    "spec_version": "0.1",
+    "data": {
+      "source": "mysql:teaching_awards.zhejiang_awards",
+      "year": [2021],
+      "filters": []
+    },
+    "variables": {
+      "dimension": "completionMode"
+    },
+    "analysis": {
+      "task": "topn",
+      "metric": "count",
+      "normalize": "none",
+      "top_n": 5
+    },
+    "output": {
+      "chart": "bar_horizontal",
+      "table": true,
+      "narrative": true
+    }
+  }
+]

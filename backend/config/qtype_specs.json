@@ -1,0 +1,61 @@
+{
+  "geo_dist": {
+    "kind": "chart",
+    "title_template": "浙江{year}年教学成果奖获奖成果地理位置分布",
+    "group_by_field": "第一完成单位地理位置",
+    "value_field": "count"
+  },
+  "discipline": {
+    "kind": "chart",
+    "title_template": "浙江{year}年教学成果奖获奖成果学科类型分布",
+    "group_by_field": "第一完成单位学科类型",
+    "value_field": "count"
+  },
+  "org_level": {
+    "kind": "chart",
+    "title_template": "浙江{year}年教学成果奖获奖成果学校层次分布",
+    "group_by_field": "第一完成单位层次",
+    "value_field": "count"
+  },
+  "theme_table": {
+    "kind": "table",
+    "title_template": "浙江{year}年教学成果奖获奖成果研究主题情况表",
+    "table_name": "award_research_theme_summary",
+    "primary_sort": ["sort_order", "asc"]
+  },
+  "completion_mode": {
+    "kind": "chart",
+    "title_template": "浙江{year}年教学成果奖获奖成果完成模式情况",
+    "table_name": "award_completion_mode_summary",
+    "year_field": "year",
+    "group_by_field": "完成方式",
+    "value_field": "数量",
+    "chart_type": "hbar",
+    "primary_sort": ["数量", "desc"]
+  },
+  "collaboration_team": {
+    "kind": "chart",
+    "title_template": "浙江{year}年教学成果奖获奖成果完成人员合作情况",
+    "table_name": "award_collaboration_team_summary",
+    "year_field": "year",
+    "group_by_field": "合作类型",
+    "value_field": "数量",
+    "chart_type": "hbar",
+    "primary_sort": ["数量", "desc"]
+  },
+  "collab": {
+    "kind": "chart",
+    "title_template": "浙江{year}年教学成果奖获奖成果完成人员合作情况",
+    "table_name": "award_collaboration_team_summary",
+    "year_field": "year",
+    "group_by_field": "合作类型",
+    "value_field": "数量",
+    "chart_type": "hbar",
+    "primary_sort": ["数量", "desc"]
+  },
+  "wordcloud": {
+    "kind": "image",
+    "title_template": "浙江{year}年教学成果奖获奖成果研究主题词云图",
+    "url_template": "/api/wordcloud/{year}"
+  }
+}

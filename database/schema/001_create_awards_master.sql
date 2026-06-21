@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS `awards_master` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `province` VARCHAR(32) NOT NULL,
+    `award_year` INT NOT NULL,
+    `award_level` VARCHAR(32) NULL,
+    `award_title` VARCHAR(512) NOT NULL,
+    `authors` TEXT NULL,
+    `org_name` VARCHAR(255) NOT NULL,
+    `first_org_level` VARCHAR(32) NULL,
+    `first_org_type` VARCHAR(32) NULL,
+    `first_org_location` VARCHAR(64) NULL,
+    `source_file` VARCHAR(255) NULL,
+    `source_sheet` VARCHAR(128) NULL,
+    `source_row_no` INT NULL,
+    `created_at` DATETIME NOT NULL,
+    `updated_at` DATETIME NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_awards_master_province_year` (`province`, `award_year`),
+    KEY `idx_awards_master_province_year_level` (`province`, `award_year`, `award_level`),
+    KEY `idx_awards_master_org_name` (`org_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
