@@ -2,21 +2,33 @@
 
 高等教育教学成果奖数据分析与智能问答平台。项目整合多省教学成果奖数据，提供多维统计分析、图表展示、结果对比、申报材料链接检索和基于当前查询结果的智能问答能力。
 
+## Preview
+
+![Website homepage](docs/images/homepage.png)
+
 ## Features
 
-- 省份、年份和分析类型的多维查询
-- 获奖单位、奖项等级、学科类型、学校层次、完成模式、合作情况等基础分析
-- 多张查询卡片并排展示和同类型结果对比
-- 浙江省研究主题表和词云图展示
-- 申报材料链接库查询
-- 基于后端数据摘要的智能问答
+* 省份、年份和分析类型的多维查询
+
+* 获奖单位、奖项等级、学科类型、学校层次、完成模式、合作情况等基础分析
+
+* 多张查询卡片并排展示和同类型结果对比
+
+* 浙江省研究主题表和词云图展示
+
+* 申报材料链接库查询
+
+* 基于后端数据摘要的智能问答
 
 ## Tech Stack
 
-- Frontend: Vue 3, Vite, Element Plus, Chart.js
-- Backend: Flask, MySQL, DeepSeek API
-- Data pipeline: Python, openpyxl, OCR/PDF extraction scripts
-- Database: MySQL
+* Frontend: Vue 3, Vite, Element Plus, Chart.js
+
+* Backend: Flask, MySQL, DeepSeek API
+
+* Data pipeline: Python, openpyxl, OCR/PDF extraction scripts
+
+* Database: MySQL
 
 ## Project Structure
 
@@ -36,13 +48,19 @@
 
 The following local folders are intentionally not committed:
 
-- `frontend/node_modules/`
-- `frontend/dist/`
-- `data/raw/`
-- `data/interim/`
-- `data-pipeline/work/`
-- `runtime/`
-- `.env`
+* `frontend/node_modules/`
+
+* `frontend/dist/`
+
+* `data/raw/`
+
+* `data/interim/`
+
+* `data-pipeline/work/`
+
+* `runtime/`
+
+* `.env`
 
 ## Local Setup
 
@@ -112,9 +130,11 @@ Only `DEEPSEEK_API_KEY` is required for the intelligent Q&A module when using th
 
 Table creation scripts are stored in `database/schema/`:
 
-- `001_create_awards_master.sql`: unified awards master table
-- `002_create_material_link_library.sql`: application material link library
-- `003_create_wordcloud_images.sql`: word cloud image storage
+* `001_create_awards_master.sql`: unified awards master table
+
+* `002_create_material_link_library.sql`: application material link library
+
+* `003_create_wordcloud_images.sql`: word cloud image storage
 
 Processed data can be imported with scripts under `data-pipeline/importers/`.
 
@@ -122,19 +142,25 @@ Processed data can be imported with scripts under `data-pipeline/importers/`.
 
 `data-pipeline/` contains scripts for:
 
-- extracting award lists from PDFs, Word documents and Excel files
-- repairing parsing issues
-- enriching school metadata
-- auditing cleaned data
-- importing standardized data into MySQL
+* extracting award lists from PDFs, Word documents and Excel files
+
+* repairing parsing issues
+
+* enriching school metadata
+
+* auditing cleaned data
+
+* importing standardized data into MySQL
 
 Province onboarding notes are maintained in `docs/PROVINCE_ONBOARDING.md`.
 
 ## Security Notes
 
-- Do not commit `.env` or real API keys.
-- Do not commit raw source files unless copyright and data-sharing scope are confirmed.
-- Keep the repository private until the project is ready for public release.
+* Do not commit `.env` or real API keys.
+
+* Do not commit raw source files unless copyright and data-sharing scope are confirmed.
+
+* Keep the repository private until the project is ready for public release.
 
 ## Current Scope
 
