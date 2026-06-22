@@ -13,6 +13,7 @@ runtime/
 # Local environment files
 .env
 .env.*
+!.env.example
 
 # Large or intermediate data files
 data/raw/
