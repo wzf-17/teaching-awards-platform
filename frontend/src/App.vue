@@ -220,7 +220,7 @@
                 <pre v-else class="chatText">{{ m.text }}</pre>
 
                 <div v-if="m.role === 'assistant'" class="aiNotice">
-                  本回答由 AI 基于平台数据生成，仅供参考。
+                  本回答由 AI 生成；涉及平台数据的部分以数据库结果为准，仅供参考。
                 </div>
               </div>
             </div>
@@ -480,8 +480,15 @@ function scrollChatToBottom(behavior = "auto") {
   })
 }
 
-async function syncChatViewport() {
+function isChatNearBottom() {
+  const el = chatBodyRef.value
+  if (!el) return true
+  return el.scrollHeight - el.scrollTop - el.clientHeight < 48
+}
+
+async function syncChatViewport(stickToBottom = true) {
   await nextTick()
+  if (!stickToBottom) return
   scrollChatToBottom()
 
   await new Promise((resolve) => {
@@ -527,6 +534,7 @@ async function sendChat() {
     const payload = {
       question: q,
       query_contexts: buildChatContexts(),
+      compare_context: buildCompareContext(),
     }
     if (chatSessionId.value) payload.session_id = chatSessionId.value
 
@@ -587,30 +595,33 @@ async function sendChat() {
 
         if (evt.type === "start") {
           assistantMsg.thinking = true
-          await syncChatViewport()
+          await syncChatViewport(false)
         }
 
         if (evt.type === "delta") {
+          const stickToBottom = isChatNearBottom()
           assistantMsg.thinking = false
           assistantMsg.streaming = true
           assistantMsg.text += evt.content || ""
-          await syncChatViewport()
+          await syncChatViewport(stickToBottom)
         }
 
         if (evt.type === "done") {
+          const stickToBottom = isChatNearBottom()
           assistantMsg.thinking = false
           assistantMsg.streaming = false
           if (!assistantMsg.text.trim()) {
             assistantMsg.text = evt.answer || "（无回答）"
           }
-          await syncChatViewport()
+          await syncChatViewport(stickToBottom)
         }
 
         if (evt.type === "error") {
+          const stickToBottom = isChatNearBottom()
           assistantMsg.thinking = false
           assistantMsg.streaming = false
           assistantMsg.text = `请求失败：${evt.error || "未知错误"}`
-          await syncChatViewport()
+          await syncChatViewport(stickToBottom)
         }
       }
     }
@@ -695,6 +706,24 @@ function newId() {
 }
 
 function buildChatContexts() {
+  if (compare.active) {
+    const pair = [leftCard.value, rightCard.value]
+      .filter((card) => card?.payload && (card.view || card.raw))
+      .map((card, idx) => ({
+        province: card.payload?.province || "",
+        qtype: card.payload?.qtype || "",
+        year: card.payload?.year || "",
+        keyword: card.payload?.keyword || "",
+        title: card.exportTitle || card.title || "",
+        view: card.view || "",
+        searchedAt: card.searchedAt || 0,
+        compareActive: true,
+        compareSide: idx === 0 ? "left" : "right",
+        compareTitle: compareExportTitle.value || "",
+      }))
+    if (pair.length === 2) return pair
+  }
+
   return cards
     .filter((card) => card.payload && (card.view || card.raw))
     .slice()
@@ -709,6 +738,39 @@ function buildChatContexts() {
       view: card.view || "",
       searchedAt: card.searchedAt || 0,
     }))
+}
+
+function buildCompareContext() {
+  if (!compare.active) return null
+  const items = [leftCard.value, rightCard.value]
+    .filter((card) => card?.payload && (card.view || card.raw))
+    .map((card, idx) => {
+      const dist = extractDist(card.chartData)
+      return {
+        province: card.payload?.province || "",
+        qtype: card.payload?.qtype || "",
+        year: card.payload?.year || "",
+        keyword: card.payload?.keyword || "",
+        title: card.exportTitle || card.title || "",
+        view: card.view || "",
+        searchedAt: card.searchedAt || 0,
+        compareActive: true,
+        compareSide: idx === 0 ? "left" : "right",
+        compareTitle: compareExportTitle.value || "",
+        chartSummary: dist
+          ? {
+              labels: dist.labels,
+              values: dist.values,
+            }
+          : null,
+      }
+    })
+  if (items.length !== 2) return null
+  return {
+    active: true,
+    title: compareExportTitle.value || "",
+    items,
+  }
 }
 
 // ===================== 查询卡片状态 =====================
@@ -1130,7 +1192,7 @@ const compareChartData = computed(() => {
     labels,
     datasets: [
       {
-        label: `${Lc.payload.year}年`,
+        label: `${provinceShortName(Lc.payload.province)}${Lc.payload.year}年`,
         data: leftValues,
         backgroundColor: "#0f766e",
         borderColor: "#0f766e",
@@ -1139,7 +1201,7 @@ const compareChartData = computed(() => {
         maxBarThickness: 22,
       },
       {
-        label: `${Rc.payload.year}年`,
+        label: `${provinceShortName(Rc.payload.province)}${Rc.payload.year}年`,
         data: rightValues,
         backgroundColor: "#f97316",
         borderColor: "#f97316",
@@ -2425,17 +2487,31 @@ onMounted(() => {
 
 @media (max-width: 640px) {
   .page {
-    padding: 18px 12px 32px;
+    padding: 12px 10px 28px;
+    overflow-x: hidden;
+  }
+
+  .heroCopy {
+    min-height: auto;
+    padding: 34px 16px 30px;
+    border-radius: 20px;
   }
 
   .heroTitle {
-    font-size: 30px;
+    width: 100%;
+    max-width: 100%;
+    font-size: 28px;
+    line-height: 1.25;
     white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    letter-spacing: 0;
   }
 
   .heroLead {
     font-size: 15px;
-    line-height: 1.85;
+    line-height: 1.75;
+    max-width: 100%;
   }
 
   .panelTitle,

@@ -1922,6 +1922,20 @@ def normalize_query_contexts(raw_contexts):
         except Exception:
             searched_at = 0
 
+        chart_summary = item.get("chartSummary")
+        if isinstance(chart_summary, dict):
+            labels = chart_summary.get("labels") or []
+            values = chart_summary.get("values") or []
+            if not isinstance(labels, list) or not isinstance(values, list):
+                chart_summary = None
+            else:
+                chart_summary = {
+                    "labels": [str(x) for x in labels[:80]],
+                    "values": [float(x or 0) for x in values[:80]],
+                }
+        else:
+            chart_summary = None
+
         contexts.append(
             {
                 "qtype": qtype,
@@ -1930,6 +1944,11 @@ def normalize_query_contexts(raw_contexts):
                 "title": str(item.get("title") or "").strip(),
                 "view": str(item.get("view") or "").strip(),
                 "searchedAt": searched_at,
+                "province": normalize_province_name(item.get("province")),
+                "compareActive": bool(item.get("compareActive")),
+                "compareSide": str(item.get("compareSide") or "").strip(),
+                "compareTitle": str(item.get("compareTitle") or "").strip(),
+                "chartSummary": chart_summary,
             }
         )
 
@@ -1939,8 +1958,8 @@ def normalize_query_contexts(raw_contexts):
 
 def normalize_query_contexts_v2(raw_contexts):
     contexts = normalize_query_contexts(raw_contexts)
-    for ctx, raw in zip(contexts, raw_contexts[: len(contexts)]):
-        ctx["province"] = normalize_province_name(raw.get("province"))
+    for ctx in contexts:
+        ctx["province"] = normalize_province_name(ctx.get("province"))
     contexts.sort(key=lambda x: x.get("searchedAt", 0), reverse=True)
     return contexts
 
@@ -1956,6 +1975,58 @@ def infer_province(question: str, query_contexts=None) -> str:
         if latest.get("province"):
             return normalize_province_name(latest["province"])
     return DEFAULT_PROVINCE
+
+
+CHINA_REGION_NAMES = [
+    "北京市", "天津市", "上海市", "重庆市",
+    "河北省", "山西省", "辽宁省", "吉林省", "黑龙江省",
+    "江苏省", "浙江省", "安徽省", "福建省", "江西省", "山东省",
+    "河南省", "湖北省", "湖南省", "广东省", "海南省",
+    "四川省", "贵州省", "云南省", "陕西省", "甘肃省", "青海省",
+    "台湾省", "内蒙古自治区", "广西壮族自治区", "西藏自治区",
+    "宁夏回族自治区", "新疆维吾尔自治区", "香港特别行政区", "澳门特别行政区",
+    "北京", "天津", "上海", "重庆", "河北", "山西", "辽宁", "吉林", "黑龙江",
+    "江苏", "浙江", "安徽", "福建", "江西", "山东", "河南", "湖北", "湖南",
+    "广东", "海南", "四川", "贵州", "云南", "陕西", "甘肃", "青海", "台湾",
+    "内蒙古", "广西", "西藏", "宁夏", "新疆", "香港", "澳门",
+]
+
+
+def extract_region_mention(question: str) -> str | None:
+    q = str(question or "").strip()
+    if not q:
+        return None
+    for name in sorted(CHINA_REGION_NAMES, key=len, reverse=True):
+        if name in q:
+            return name
+    return None
+
+
+def province_has_platform_data(province: str) -> bool:
+    return normalize_province_name(province) in PROVINCE_CONFIG
+
+
+def build_summary_from_chart_context(ctx: dict, top_n: int = 5) -> str | None:
+    chart_summary = ctx.get("chartSummary")
+    if not isinstance(chart_summary, dict):
+        return None
+    labels = chart_summary.get("labels") or []
+    values = chart_summary.get("values") or []
+    if not labels or not values:
+        return None
+    dist = _build_dist_summary(labels, values, top_n=top_n)
+    province = province_display_name(ctx.get("province"))
+    year = ctx.get("year") or ""
+    qtype = qtype_label(ctx.get("qtype") or "")
+    title = ctx.get("title") or f"{province}{year}年{qtype}"
+    lines = [f"{title}。总计 {dist['total']} 项。"]
+    for i, t in enumerate(dist["top"], start=1):
+        lines.append(f"Top{i}：{t['label']} {t['count']}项（{t['percent']}%）")
+    if dist["others"]["count"] > 0:
+        lines.append(f"其余合计：{dist['others']['count']}项（{dist['others']['percent']}%）")
+    lines.append(f"集中度（Top1占比）：{dist['top1_percent']}%")
+    lines.append("来源：当前页面对比图表数据。")
+    return "\n".join(lines)
 
 
 def build_context_block(query_contexts):
@@ -2351,6 +2422,18 @@ def chat_v2():
     body = request.get_json(silent=True) or {}
     session_id = (body.get("session_id") or "").strip()
     query_contexts = normalize_query_contexts_v2(body.get("query_contexts") or [])
+    compare_context = body.get("compare_context") or {}
+    explicit_compare_contexts = []
+    if isinstance(compare_context, dict) and compare_context.get("active"):
+        explicit_compare_contexts = normalize_query_contexts_v2(compare_context.get("items") or [])
+        for ctx in explicit_compare_contexts:
+            ctx["compareActive"] = True
+            if compare_context.get("title") and not ctx.get("compareTitle"):
+                ctx["compareTitle"] = str(compare_context.get("title") or "").strip()
+    if len(explicit_compare_contexts) >= 2:
+        query_contexts = explicit_compare_contexts + [
+            ctx for ctx in query_contexts if not ctx.get("compareActive")
+        ]
     question = (body.get("question") or "").strip()
     top_n = int(body.get("top_n", 5))
 
@@ -2365,49 +2448,127 @@ def chat_v2():
 
     intent = infer_intent(question)
     intent = apply_query_context_to_intent(question, intent, query_contexts)
-    province = infer_province(question, query_contexts)
+    answer_mode = decide_answer_mode(question, intent, query_contexts)
+    compare_contexts = [ctx for ctx in query_contexts if ctx.get("compareActive")]
+    if len(compare_contexts) >= 2 and answer_mode == "general":
+        answer_mode = "data_plus_reasoning"
+
+    requested_region = extract_region_mention(question)
+    inferred_province = infer_province(question, query_contexts)
+    province = normalize_province_name(requested_region) if requested_region else inferred_province
+    if len(compare_contexts) >= 2 and not requested_region:
+        province = normalize_province_name(compare_contexts[0].get("province"))
+    has_platform_data = province_has_platform_data(province)
+
     qtype = intent.get("qtype") or (query_contexts[0]["qtype"] if query_contexts else "org")
-    if not province_supports_qtype(province, qtype):
+    if len(compare_contexts) >= 2 and compare_contexts[0].get("qtype"):
+        qtype = compare_contexts[0]["qtype"]
+    if has_platform_data and not province_supports_qtype(province, qtype):
         available = get_available_qtypes(province)
         qtype = available[0] if available else "org"
 
-    years = []
-    if intent.get("is_compare"):
-        y1 = intent.get("y1") or pick_default_year(province)
-        y2 = intent.get("y2") or pick_default_year(province)
-        years = [y1, y2]
-    else:
-        years = [intent.get("year") or pick_default_year(province)]
+    needs_data_summary = answer_mode in ("data_only", "data_plus_reasoning")
+    if answer_mode == "contextual_general" and has_platform_data:
+        needs_data_summary = True
 
     summaries = []
-    for year in years:
-        try:
-            summaries.append(build_summary_text_v2(province, int(year), qtype, top_n=top_n))
-        except Exception as e:
-            summaries.append(str(e))
+    if needs_data_summary and has_platform_data:
+        if len(compare_contexts) >= 2:
+            ordered_contexts = sorted(compare_contexts[:2], key=lambda x: x.get("compareSide") == "right")
+            for ctx in ordered_contexts:
+                chart_summary_text = build_summary_from_chart_context(ctx, top_n=top_n)
+                if chart_summary_text:
+                    summaries.append(chart_summary_text)
+                    continue
+
+                ctx_province = normalize_province_name(ctx.get("province") or province)
+                ctx_qtype = ctx.get("qtype") or qtype
+                ctx_year = ctx.get("year") or pick_default_year(ctx_province)
+                if not province_has_platform_data(ctx_province):
+                    summaries.append(f"{province_display_name(ctx_province)}：当前平台暂无该省份结构化数据。")
+                    continue
+                if not province_supports_qtype(ctx_province, ctx_qtype):
+                    available = get_available_qtypes(ctx_province)
+                    ctx_qtype = available[0] if available else ctx_qtype
+                try:
+                    summaries.append(build_summary_text_v2(ctx_province, int(ctx_year), ctx_qtype, top_n=top_n))
+                except Exception as e:
+                    summaries.append(str(e))
+        else:
+            if intent.get("is_compare"):
+                y1 = intent.get("y1") or pick_default_year(province)
+                y2 = intent.get("y2") or pick_default_year(province)
+                years = [y1, y2]
+            else:
+                years = [intent.get("year") or pick_default_year(province)]
+
+            for year in years:
+                try:
+                    summaries.append(build_summary_text_v2(province, int(year), qtype, top_n=top_n))
+                except Exception as e:
+                    summaries.append(str(e))
 
     context_lines = []
     for idx, ctx in enumerate(query_contexts[:3], start=1):
-        parts = [f"最近查询{idx}"]
+        if ctx.get("compareActive"):
+            side_label = "左侧对比项" if ctx.get("compareSide") == "left" else "右侧对比项"
+            parts = [side_label]
+        else:
+            parts = [f"最近查询{idx}"]
         if ctx.get("province"):
-            parts.append(f"省份={ctx['province']}")
+            parts.append(f"省份={province_display_name(ctx['province'])}")
         if ctx.get("year"):
             parts.append(f"年份={ctx['year']}")
         if ctx.get("title"):
             parts.append(ctx["title"])
+        if ctx.get("compareTitle"):
+            parts.append(f"对比主题={ctx['compareTitle']}")
         context_lines.append("；".join(parts))
     context_block = "\n".join(context_lines)
     summary_block = "\n\n---\n\n".join(summaries)
 
-    system_prompt = (
-        "你是一个中文教育数据分析助手。"
-        "回答时优先依据给定的数据摘要和查询上下文，不要编造数据库中没有的数据。"
-        "如果包含推断，请明确说明是基于常识的分析而不是数据库事实。"
-    )
+    if answer_mode == "data_only":
+        system_prompt = (
+            "你是中文教育数据分析助手。用户问题如果明显询问平台数据库里的数量、分布、排名、对比、年份变化等数据事实，"
+            "必须严格依据【数据摘要】回答，不得编造数据库中没有的具体数值、项目、学校或结论。"
+            "如果平台没有该省份或该维度的数据，要明确说明当前平台暂无相应数据。回答时先给结论，再列依据。"
+        )
+    elif answer_mode == "data_plus_reasoning":
+        system_prompt = (
+            "你是中文教育数据分析助手。回答分两层：第一层【数据库事实】只能依据【数据摘要】；"
+            "第二层【解释和推断】可以结合教育评价、高等教育治理、区域产业和教学成果奖申报的一般知识，"
+            "但必须明确这是推断或建议，不得说成数据库已经证明。"
+        )
+    elif answer_mode == "contextual_general":
+        system_prompt = (
+            "你是中文教育分析与教学成果奖申报咨询助手。"
+            "当用户提出题目推荐、选题方向、命名、申报写作、原因解释、优化建议等开放型问题时，"
+            "可以结合通用知识、教育领域经验、区域高教和产业背景正常回答。"
+            "如果平台提供了【数据摘要】，涉及数据库事实时必须以摘要为准；"
+            "如果用户提到的省份或主题暂无平台数据，也不要拒答，而是说明平台暂无该省份数据，"
+            "随后基于一般知识和申报经验给出建议。请避免把建议伪装成数据库事实。"
+        )
+    else:
+        system_prompt = (
+            "你是中文通用智能助手，同时熟悉教学成果奖、高等教育治理、教育评价和申报写作。"
+            "当问题不依赖平台数据库时，直接自然回答，不要强行局限于当前页面查询结果。"
+        )
+
+    data_notice = ""
+    if requested_region and not has_platform_data:
+        data_notice = f"平台当前暂无“{requested_region}”的结构化数据库数据；如需回答开放型建议，可结合通用知识和申报经验。"
+    compare_notice = ""
+    if len(compare_contexts) >= 2:
+        compare_notice = "当前问题来自对比面板。回答必须同时分析左侧和右侧两个对比项，先分别概括双方数据，再指出共同点、差异和可能原因。不得只分析其中一侧。"
+
     user_content = (
-        f"【当前省份】\n{province_display_name(province)}\n\n"
+        f"【用户明确提到的地区】\n{requested_region or '无'}\n\n"
+        f"【用于数据库查询的省份】\n{province_display_name(province) if has_platform_data else province}\n\n"
+        f"【回答模式】\n{answer_mode}\n\n"
         f"【查询上下文】\n{context_block or '无'}\n\n"
         f"【数据摘要】\n{summary_block or '无'}\n\n"
+        f"【对比分析要求】\n{compare_notice or '无'}\n\n"
+        f"【数据覆盖提示】\n{data_notice or '无'}\n\n"
         f"【用户问题】\n{question}"
     )
 
