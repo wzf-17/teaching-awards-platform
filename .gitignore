@@ -27,3 +27,7 @@ data-pipeline/work/
 *.db
 *.sqlite
 *.sqlite3
+
+# Local database dumps
+*.sql
+!database/schema/*.sql
